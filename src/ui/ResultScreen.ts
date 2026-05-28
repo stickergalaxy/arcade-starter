@@ -6,7 +6,6 @@
  */
 
 import * as sdk from '../sdk.js'
-import { type ResultData } from '../sdk.js'
 import { tgHaptic, tgMainButton } from '../tg.js'
 
 let _el: HTMLElement | null = null
@@ -87,7 +86,7 @@ async function postGameResult(
   renderResultData(result)
 }
 
-function renderResultData(result: sdk.SDKResponse<ResultData>): void {
+function renderResultData(result: sdk.SDKResponse<sdk.ResultData>): void {
   const midiEl  = document.getElementById('result-midi-value')
   const rankEl  = document.getElementById('result-rank')
   const trophyEl = document.getElementById('result-trophy')
@@ -99,7 +98,7 @@ function renderResultData(result: sdk.SDKResponse<ResultData>): void {
     }
     if (rankEl) {
       rankEl.textContent = result.error.includes('session_token')
-        ? 'Connect via @stickergalaxybot for real midi rewards'
+        ? 'Connect via the host bot for real midi rewards'
         : `Result: ${result.error}`
     }
     return
@@ -107,23 +106,56 @@ function renderResultData(result: sdk.SDKResponse<ResultData>): void {
 
   const data = result.data
 
-  // Midi pop animation
+  // v2 pattern: /result records but doesn't mint. Show Submit button.
+  if (data.submits_remaining > 0 && data.projected_midi > 0) {
+    if (midiEl) {
+      midiEl.innerHTML = `
+        Bank for <strong>+${data.projected_midi}</strong> midi
+        <button id="result-submit-btn" style="margin-left:12px;padding:6px 14px;cursor:pointer;">
+          Submit (${data.submits_remaining} left today)
+        </button>
+      `
+      document.getElementById('result-submit-btn')?.addEventListener('click', async () => {
+        const btn = document.getElementById('result-submit-btn') as HTMLButtonElement | null
+        if (btn) { btn.disabled = true; btn.textContent = 'Banking…' }
+        const submitResp = await sdk.submitResult(data.result_id)
+        renderSubmittedState(submitResp)
+      })
+    }
+  } else if (data.submits_remaining <= 0) {
+    if (midiEl) midiEl.textContent = 'Daily cap reached — keep practicing!'
+  } else {
+    if (midiEl) midiEl.textContent = 'No midi (score: 0)'
+  }
+
+  if (rankEl && data.leaderboard_rank) {
+    rankEl.textContent = `Tentative rank: #${data.leaderboard_rank} this month`
+  }
+
+  tgHaptic('selection')
+  void trophyEl  // trophy mints at month-end cron, not on /result
+}
+
+function renderSubmittedState(resp: sdk.SDKResponse<sdk.SubmitData>): void {
+  const midiEl   = document.getElementById('result-midi-value')
+  const rankEl   = document.getElementById('result-rank')
+  const trophyEl = document.getElementById('result-trophy')
+
+  if (!resp.success) {
+    if (midiEl) midiEl.textContent = `Submit failed: ${resp.error}`
+    tgHaptic('warning')
+    return
+  }
+  const data = resp.data
   if (midiEl) {
-    midiEl.textContent = `+${data.midi_awarded}`
+    midiEl.textContent = `+${data.midi_awarded} midi`
     midiEl.classList.add('animating')
     setTimeout(() => midiEl.classList.remove('animating'), 500)
   }
-
-  tgHaptic(data.midi_awarded > 0 ? 'success' : 'warning')
-
   if (rankEl && data.leaderboard_rank) {
-    rankEl.textContent = `Leaderboard rank: #${data.leaderboard_rank}`
+    rankEl.textContent = `Rank: #${data.leaderboard_rank} (tentative until month-end)`
   }
-
-  if (trophyEl && data.trophy_awarded) {
-    trophyEl.textContent = `🏆 Trophy earned: ${data.trophy_awarded.name}`
-    trophyEl.classList.remove('hidden')
-    trophyEl.classList.add('visible')
-    tgHaptic('success')
-  }
+  // Trophies mint at month-end cron, not here. Leave trophy slot empty.
+  void trophyEl
+  tgHaptic('success')
 }

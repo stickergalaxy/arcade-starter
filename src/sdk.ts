@@ -68,9 +68,22 @@ export interface ResultPayload {
 }
 
 export interface ResultData {
+  result_id: string
+  midi_awarded: number          // always 0 in v2 — mint happens at /submit
+  projected_midi: number        // what /submit would mint
+  submits_remaining: number     // bankable runs left today
+  trophy_awarded: TrophyData | null  // always null in v2 — trophies mint at month-end cron
+  leaderboard_rank: number | null    // provisional; label as "tentative until month-end"
+  message: string
+}
+
+export interface SubmitData {
+  result_id: string
   midi_awarded: number
-  trophy_awarded: TrophyData | null
-  leaderboard_rank: number | null
+  new_midi_balance: number
+  trophy_awarded: TrophyData | null  // null in v2 — trophies mint at month-end cron
+  leaderboard_rank: number | null    // updated post-submit
+  submits_remaining: number
   message: string
 }
 
@@ -194,7 +207,13 @@ export async function postEntry(
 }
 
 /**
- * Submit the outcome of a completed play session.
+ * Record the outcome of a completed play session.
+ *
+ * **v2 semantics:** /result is UNLIMITED and does NOT mint midi. It returns
+ * a result_id + projected_midi + submits_remaining. To bank a run (mint midi,
+ * post to leaderboard), call submitResult(result_id) when the player taps a
+ * "Submit Score" button.
+ *
  * Must be called with an entry_id from postEntry.
  */
 export async function postResult(
@@ -212,6 +231,25 @@ export async function postResult(
       play_duration_seconds: payload.play_duration_seconds,
       metadata: payload.metadata ?? {},
     }),
+  })
+}
+
+/**
+ * Bank a practice result (v2). Mints midi, counts toward daily cap, updates
+ * leaderboard. Trophies are NOT awarded here — they mint at month-end via
+ * the host cron.
+ *
+ * Call this only when the player explicitly chooses to submit a run (e.g.
+ * taps a "Submit Score" button). Idempotent: 409 if already submitted.
+ *
+ * Errors: 404 unknown result_id, 409 already submitted, 429 daily cap.
+ */
+export async function submitResult(
+  resultId: string,
+): Promise<SDKResponse<SubmitData>> {
+  return apiFetch<SubmitData>('/arcade/v0/submit', {
+    method: 'POST',
+    body: JSON.stringify({ result_id: resultId }),
   })
 }
 
