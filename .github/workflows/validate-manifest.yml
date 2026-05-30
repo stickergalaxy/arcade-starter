@@ -1,0 +1,40 @@
+name: Validate Manifest
+
+on:
+  push:
+    paths:
+      - 'manifest.json'
+      - 'manifest.schema.json'
+  pull_request:
+    paths:
+      - 'manifest.json'
+      - 'manifest.schema.json'
+
+jobs:
+  validate:
+    name: Schema lint (manifest.json)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Validate manifest against schema
+        run: npm run validate
+
+      - name: Upload manifest (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: invalid-manifest
+          path: manifest.json
+          retention-days: 7

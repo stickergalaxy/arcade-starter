@@ -90,6 +90,8 @@ Every `[REQUIRED]` field must be filled before the Galactic Council will approve
 
 See the inline comments in `manifest.json` for guidance on every other field.
 
+Run `npm run validate` to check your manifest against the official schema.
+
 ---
 
 ## Dev token
