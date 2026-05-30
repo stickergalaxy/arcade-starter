@@ -1,6 +1,10 @@
 /// <reference types="vite/client" />
 /**
- * src/sdk.ts — Sticker Galaxy Arcade SDK v0 wrapper
+ * src/sdk.ts — Sticker Galaxy Arcade SDK v1 wrapper
+ *
+ * TODO: when @stickergalaxy/sdk-core is published to npm, replace this file
+ * with: import * as sdk from '@stickergalaxy/sdk-core'. For now this is the
+ * vendored local copy. Do not modify for game-specific logic.
  *
  * Wraps every arcade endpoint with:
  *   - Authorization: Bearer <session_token>  (from URL params)
@@ -442,7 +446,7 @@ export interface ShareToStoryOptions {
 export async function shareToStory(
   opts: ShareToStoryOptions,
 ): Promise<SDKResponse<{ shared: boolean }>> {
-  return rpcCall<{ shared: boolean }>('SG_SHARE_TO_STORY', opts as Record<string, unknown>, 8000)
+  return rpcCall<{ shared: boolean }>('SG_SHARE_TO_STORY', opts as unknown as Record<string, unknown>, 8000)
 }
 
 // ── YODA-376: getReferral ────────────────────────────────────────────────────

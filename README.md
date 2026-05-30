@@ -1,223 +1,154 @@
-# ⭐ Sticker Galaxy Arcade — Studio Starter Template
+# ⭐ Sticker Galaxy Arcade Starter — v2
 
-**Build a Sticker Galaxy minigame in 60 minutes.**
+A forkable scaffold for Sticker Galaxy Arcade minigames. Fork this repo, install, run `npm run dev`, and you have a fully-styled Telegram mini-app with parchment surfaces, fireflies, leaderboard, settings, and result screen — all wired to the live arcade backend. Your job: replace `src/game/` with your actual game.
 
-This is the official scaffold for third-party studios building minigames on the [Sticker Galaxy](https://docs-site-taupe-pi.vercel.app) platform. Clone it, replace the placeholder game, and you have a fully SDK-integrated minigame running inside Telegram.
-
-> **Docs:** [docs-site-taupe-pi.vercel.app](https://docs-site-taupe-pi.vercel.app)  
-> **SDK reference:** [/sdk/](https://docs-site-taupe-pi.vercel.app/sdk/)  
-> **AI context file:** [llms.txt](https://docs-site-taupe-pi.vercel.app/llms.txt)
+> **v2 replaces the old "tap-the-sticker" placeholder** (hollowtradr/arcade-starter) with the real `@stickergalaxy/arcade-ui` design system.
 
 ---
 
-## Quick Start
+## What you get in 60 seconds
 
 ```bash
-# 1. Clone the template
-gh repo clone hollowtradr/arcade-starter my-game && cd my-game
+# 1. Fork or clone
+gh repo clone stickergalaxy/arcade-starter my-game && cd my-game
 
-# 2. Install dependencies
+# 2. Install
 npm install
 
-# 3. Set up local dev environment
-cp .env.example .env
-# Open .env and fill in VITE_ARCADE_SESSION_TOKEN
-# (See below for how to get a dev token from Hollow)
-
-# 4. Run the dev server
+# 3. Run
 npm run dev
-# → http://localhost:5173
-# Resize your browser to 390×844 to simulate the Telegram Mini App viewport.
-# The placeholder game ("Tap-the-Sticker") runs immediately in demo mode.
-
-# 5. Replace the game
-# Delete src/game/ and write your real game logic.
-# Contract: when your game ends, call the onEnd(score, outcome) callback
-# that main.ts passes to startGame(). Keep sdk.ts and tg.ts unchanged.
-
-# 6. Update manifest.json
-# Fill in name, studio, sector, max_score, play_duration_range_seconds.
-# See manifest.json for field-by-field guidance.
-
-# 7. Deploy
-# Vercel: `npx vercel --prod`
-# Netlify: `netlify deploy --prod --dir=dist`
-# Any static host works. Needs HTTPS.
-
-# 8. Submit for review
-# Post your manifest.json to the Galactic Council Telegram group:
-#   /council propose_minigame { ...your manifest... }
+# → http://localhost:5173/?dev=1
 ```
+
+Open at `http://localhost:5173/?dev=1`. You'll see:
+
+- **Title screen** with parchment surface, animated fireflies, god-ray shafts, hero slot, player stats strip, and a "Begin Run" CTA
+- **Leaderboard overlay** — parchment, podium 2-1-3, medal + glyph + height (a11y-clean rank)
+- **Settings modal** — pluggable "Game" section (example: Sound Effects toggle) + built-in "Account" section with wallet delegation
+- **Placeholder game** — 5-second tap counter (your replacement target)
+- **Result screen** — parchment scroll, score, projected midi, "Submit Score" button that mints midi on tap
+
+`?dev=1` = demo mode. No real session token needed to see the full UI. For real midi rewards, get a dev token from @hollowtradr (see [Dev Token](#dev-token)).
 
 ---
 
-## Getting a Dev Session Token
+## Where your game goes
 
-Without a session token the game runs in **demo mode** — you see the full UI but SDK calls return gracefully without real midi rewards. That's fine for building.
-
-When you're ready to test the real API round-trip, DM **@hollowtradr** on Telegram. He'll run:
-
-```bash
-cd babyyoda-bot
-uv run python -c "
-from app.api.arcade import issue_session_token
-print(issue_session_token(<your_telegram_user_id>, 'starter_dev'))
-"
+```
+src/game/index.ts   ← THE SLOT
 ```
 
-Paste the output into `.env` as `VITE_ARCADE_SESSION_TOKEN`. Tokens expire after **60 minutes**.
+Replace the placeholder with your game. The contract is three lines:
+
+```typescript
+export interface GameOpts {
+  container: HTMLElement                                   // mount your game here
+  onEnd: (score: number, outcome: 'win'|'loss'|'draw') => void  // call when done
+}
+
+export function startGame(opts: GameOpts): void { /* your game */ }
+export function stopGame(opts?: GameOpts): void  { /* cleanup */ }
+```
+
+That's it. When `onEnd` fires, `main.ts` takes over: posts the result, shows the result screen, handles submit. You don't touch any of that.
+
+See `src/game/README.md` for engine guidance and the state model.
 
 ---
 
-## File Map
+## File map
 
 | File | What it does |
-|------|-------------|
-| `src/main.ts` | Entry point. Boots the SDK, runs session auth, starts the game loop, wires up UI. |
-| `src/sdk.ts` | **The SDK wrapper.** Every Arcade API call lives here. Do not modify — your game calls it, doesn't own it. |
-| `src/tg.ts` | Telegram WebApp helpers (ready/expand, haptics, CloudStorage, MainButton, BackButton). No-ops outside Telegram. |
-| `src/game/index.ts` | **Placeholder game: "Tap-the-Sticker".** Delete this entire folder and replace with your game. |
-| `src/game/render.ts` | Canvas rendering for the placeholder. Replace with your renderer. |
-| `src/game/state.ts` | Game state for the placeholder. Replace with your state model. |
-| `src/ui/HUD.ts` | Score + timer + midi balance overlay during gameplay. |
-| `src/ui/ResultScreen.ts` | Post-game screen. Calls `sdk.postResult()`, shows midi earned, triggers trophy modal. |
-| `src/ui/Leaderboard.ts` | Leaderboard overlay. Calls `sdk.getLeaderboard()`. Toggleable mid-game or from result screen. |
-| `src/style.css` | Base styles. Designed for Telegram Mini App viewports (mobile-first, dark theme). |
-| `manifest.json` | Your game's manifest. Fill in before review submission. See field comments. |
-| `.env.example` | Copy to `.env`. Holds your dev session token and API URL. |
-| `index.html` | Minimal HTML shell. Loads the Telegram WebApp SDK script. |
-| `vite.config.ts` | Vite config. Targets ES2020, serves on 0.0.0.0 for mobile preview. |
+|---|---|
+| `src/main.ts` | Entry point. Boots SDK → title screen → game → result screen. |
+| `src/sdk.ts` | SDK wrapper. Every arcade API call lives here. Don't modify. |
+| `src/tg.ts` | Telegram WebApp helpers (ready, haptics, CloudStorage, buttons). No-ops outside Telegram. |
+| `src/style.css` | Imports `@stickergalaxy/arcade-ui/src/all.css` + game overrides. |
+| `src/game/index.ts` | **Your game slot.** Replace this. |
+| `src/game/state.ts` | Minimal game state. Replace with your model. |
+| `src/ui/HUD.ts` | In-game score/balance overlay. Extend as needed. |
+| `manifest.json` | Game manifest. Fill before review submission. |
+| `public/` | Static assets copied verbatim to build root. |
+| `src/assets/` | Sprites/images imported by TypeScript (Vite hashes filenames). |
 
 ---
 
-## SDK API Quick Reference
+## manifest.json — fields that block submission
 
-```typescript
-import * as sdk from './sdk.js'
+Every `[REQUIRED]` field must be filled before the Galactic Council will approve your game.
 
-// Bootstrap — call once before anything else
-sdk.initSDK()
+| Field | What to put there |
+|---|---|
+| `name` | Display name in the Arcade (≤24 chars) |
+| `studio` | Your studio name |
+| `studio_ton_wallet` | TON wallet for revenue payouts — you get 70% of purchases |
+| `genre` | One of: arcade, puzzle, racing, auto-battler, idle, other |
+| `sector` | The SG sector: cantina-district, dagobah, coruscant, etc. |
+| `url` | Production HTTPS URL |
+| `max_score` | Max a skilled human can score — **not 99999**. Playtest and measure. |
+| `play_duration_range_seconds` | `[min, max]` seconds per run |
 
-// Validate session, get player context
-const session = await sdk.initSession()
-// session.data: { user_id, display_name, midi_balance, daily_plays_remaining, proof_of_play_token, ... }
-
-// Register a play (entry_fee_midi = 0 for free-to-play)
-const entry = await sdk.postEntry(0, 'My game entry')
-// entry.data: { entry_id, new_midi_balance }
-
-// Submit result when game ends
-const result = await sdk.postResult(entryId, {
-  score: 850,
-  outcome: 'win',            // 'win' | 'loss' | 'draw'
-  play_duration_seconds: 42,
-  metadata: { level: 3 },
-})
-// result.data: { midi_awarded, trophy_awarded, leaderboard_rank }
-
-// Sell a cosmetic (routes through host payment UI)
-const purchase = await sdk.purchase('cosmetic_skin', 'my_skin', 0.5, 'TON', 'Cool skin')
-
-// Leaderboard + trophies
-const lb       = await sdk.getLeaderboard(20, 0)
-const trophies = await sdk.getTrophies()
-
-// postMessage bridge
-sdk.postMessageBridge('GAME_COMPLETE', { entry_id: entryId })
-sdk.onHostMessage('PURCHASE_CONFIRMED', (data) => { /* unlock item */ })
-```
-
-All methods return `{ success: true, data }` or `{ success: false, error }`. They never throw.
+See the inline comments in `manifest.json` for guidance on every other field.
 
 ---
 
-## Telegram Helpers
+## Dev token
 
-```typescript
-import { tgReady, tgHaptic, tgCloudGet, tgCloudSet, tgMainButton, tgBackButton } from './tg.js'
+Without a session token the game runs in demo mode (`?dev=1`). For real midi rewards and the full API round-trip, DM **@hollowtradr** on Telegram. He'll generate a dev token. Paste it into `.env` as `VITE_ARCADE_SESSION_TOKEN`.
 
-tgReady()                            // call once on load; signals Telegram + expands viewport
-tgHaptic('impact_medium')            // haptic: impact_light/medium/heavy, success, error, warning, selection
-await tgCloudGet('tutorial_seen')    // read from CloudStorage (falls back to localStorage in dev)
-await tgCloudSet('tutorial_seen', '1')
-tgMainButton('Play Again', () => {}) // native bottom button
-tgBackButton(() => saveAndExit())    // handle back navigation
-```
-
-All helpers are no-ops when running outside Telegram. Safe for local dev.
+Tokens expire after 60 minutes. For local dev, `?dev=1` is usually sufficient — you can see every screen without a token.
 
 ---
 
-## What You Can / Cannot Do
-
-| ✅ You own | ❌ You cannot touch |
-|-----------|---------------------|
-| Game logic, UI, visual design | A player's midi balance directly |
-| In-game cosmetics (skins, icons) | Combat stats, equipment, Padawan levels |
-| Your own server / storage | The host's DOM (no `window.parent` access) |
-| Posting results via `sdk.postResult()` | Real-money payments (use `sdk.purchase()`) |
-| Reading player context from `sdk.initSession()` | localStorage/cookies from the host shell |
-| Declaring trophies in your manifest | Awarding trophies directly |
-| Prompting cosmetic or extra-play purchases | Selling stat boosts or P2W items |
-
-See [SDK §10](https://docs-site-taupe-pi.vercel.app/sdk/#sandbox-runtime-rules) for the full sandbox rules.
-
----
-
-## Using AI to Build Your Game
-
-Drop this URL into **Cursor**, **Claude**, or any AI assistant:
-
-```
-https://docs-site-taupe-pi.vercel.app/llms.txt
-```
-
-It's the full SDK contract in one file. Then tell your AI:
-
-> "Replace `src/game/` with [your game idea]. Keep `src/sdk.ts` and `src/tg.ts` unchanged. Use the SDK exactly as documented. When the game ends, call `onEnd(score, outcome)`. Score is an integer, outcome is 'win', 'loss', or 'draw'."
-
-The placeholder game already exercises the full SDK round-trip, so you can see the pattern before erasing it.
-
----
-
-## Deployment
-
-The build output is a static bundle — deploy anywhere:
+## Deploy & submit
 
 ```bash
 npm run build    # outputs to dist/
 
-# Vercel (recommended — zero config)
+# Vercel (recommended)
 npx vercel --prod
 
 # Netlify
 netlify deploy --prod --dir=dist
-
-# Any CDN / static host — just point at dist/
 ```
 
-After deploying, update `manifest.json` with your production `url` and share it with Hollow for sandbox review.
+Your game needs HTTPS. Any static host works (Vercel, Netlify, Cloudflare Pages, GitHub Pages).
+
+After deploying, fill in `url` in `manifest.json`, then submit to the Galactic Council:
+
+```
+/council propose_minigame { ...paste your manifest... }
+```
+
+The Council reviews the manifest + does a sandbox test session. Typical turnaround: 24–48h.
 
 ---
 
-## Review Checklist
+## Studio bounty
 
-Before submitting `/council propose_minigame`:
+Sticker Galaxy pays studios for shipped games:
 
-- [ ] `name`, `studio`, `studio_ton_wallet`, `genre`, `sector`, `url` filled in
-- [ ] `max_score` is honest — it's the max a real human can score, not `999999`
-- [ ] `play_duration_range_seconds` matches actual gameplay
-- [ ] No separate login / auth prompt
-- [ ] No purchases of type `combat_stat_boost` or `equipment`
-- [ ] Game works at 390px width on mobile
-- [ ] `tgReady()` called on load
-- [ ] `postMessage GAME_COMPLETE` sent when player exits
+| Milestone | Reward |
+|---|---|
+| Game approved by Council and goes live | **2 TON** |
+| Game hits 500 active players in first month | **5 TON** |
+| Ongoing | **70% of all in-game purchase revenue** |
+
+See the Arcade Studio Leverage Playbook for the full bounty structure (link coming soon — ask @hollowtradr).
 
 ---
 
-## Contact
+## Links
 
-- **Platform owner:** @hollowtradr on Telegram
-- **Galactic Council group:** submit your manifest with `/council propose_minigame`
-- **Docs:** [docs-site-taupe-pi.vercel.app](https://docs-site-taupe-pi.vercel.app)
-- **SDK reference:** [/sdk/](https://docs-site-taupe-pi.vercel.app/sdk/)
+| Resource | URL |
+|---|---|
+| Full tutorial | `docs/MINIGAME_BUILDER_GUIDE.md` |
+| SDK reference | `docs/ARCADE_SDK_v1.md` |
+| Design system | [`@stickergalaxy/arcade-ui`](https://github.com/stickergalaxy/arcade-ui) |
+| llms.txt (AI context) | Coming soon — YODA-382 |
+
+---
+
+## What changed from v1
+
+v1 was a 1500-line "tap-the-sticker" placeholder with hand-rolled CSS for the leaderboard, result screen, and settings modal. v2 imports `@stickergalaxy/arcade-ui` for all of that — the same design system extracted from Swamp Runner. The placeholder game is now ~70 lines and clearly labeled as the slot to replace. Everything else is wired and working.

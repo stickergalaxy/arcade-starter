@@ -1,31 +1,55 @@
 {
-  "_comment": "Sticker Galaxy Arcade — Game Manifest. Submit this via /council propose_minigame in the Galactic Council Telegram group.",
-  "_review_required": "Fields marked [REQUIRED] must be filled before submitting for review.",
+  "_doc": "Sticker Galaxy Arcade — Game Manifest v2. Submit via /council propose_minigame in the Galactic Council Telegram group.",
+  "_review_required": "Fields tagged [REQUIRED] must be filled before submitting. Unfilled [REQUIRED] fields will fail automated lint and block your review.",
 
-  "name": "Your Game Name",                    // [REQUIRED] Display name in the Arcade
-  "studio": "Your Studio Name",                 // [REQUIRED] Studio display name
-  "studio_ton_wallet": "EQD...",                // [REQUIRED] TON wallet for revenue payouts (70% of purchases)
+  "name": "Your Game Name",
+  "_name_note": "[REQUIRED] Display name in the Arcade. Short (≤24 chars). Shown in leaderboards, result screens, and the sector map.",
 
-  "genre": "arcade",                            // [REQUIRED] e.g. "arcade", "auto-battler", "puzzle", "racing"
-  "sector": "cantina-district",                 // [REQUIRED] Telegram group sector your game belongs to
-  "description": "One-line description of what makes your game fun and unique.",
+  "studio": "Your Studio Name",
+  "_studio_note": "[REQUIRED] Your studio display name. Shown in the Arcade listing.",
 
-  "url": "https://your-game.your-domain.com",   // [REQUIRED] Production URL (must be HTTPS)
-  "sandbox_url": "https://your-game.your-domain.com?sandbox=1", // Staging URL for review testing
+  "studio_ton_wallet": "EQD...",
+  "_studio_ton_wallet_note": "[REQUIRED] Your TON wallet address for revenue payouts. You receive 70% of every in-game purchase. Cannot be changed after first payout.",
 
-  "max_score": 1000,                            // [REQUIRED] Realistic maximum score a human can achieve
-  "perfect_score_achievable": false,            // true if a perfect run is possible (enables Exceptional Eight rule)
-  "play_duration_range_seconds": [5, 15],       // [REQUIRED] [min, max] for a single play session
+  "genre": "arcade",
+  "_genre_note": "[REQUIRED] One of: arcade, puzzle, racing, auto-battler, idle, other.",
 
-  "trophy_enabled": true,                       // true = opt into monthly leaderboard trophies
-  "wager_enabled": false,                       // true = enable player-vs-player midi wagering
+  "sector": "cantina-district",
+  "_sector_note": "[REQUIRED] The Sticker Galaxy sector your game belongs to (e.g. cantina-district, dagobah, coruscant). Sets your visual/lore context.",
+
+  "description": "One sentence: what makes your game fun.",
+  "_description_note": "Shown in the Arcade listing. 120 chars max.",
+
+  "url": "https://your-game.your-domain.com",
+  "_url_note": "[REQUIRED] Production URL. Must be HTTPS. The host launches your game in an iframe at this URL with ?session_token=... appended.",
+
+  "sandbox_url": "https://your-game.your-domain.com?sandbox=1",
+  "_sandbox_url_note": "Optional staging URL used by Council reviewers during approval. If omitted, reviewers use the production url.",
+
+  "max_score": 1000,
+  "_max_score_note": "[REQUIRED] Realistic maximum a skilled human can achieve. NOT 99999. Get this wrong and players earn 1 midi per run. Halve or double after first week of telemetry if median is outside 40–70% of max.",
+
+  "perfect_score_achievable": false,
+  "_perfect_score_achievable_note": "Set true only if a flawless run can hit max_score exactly. Enables the Exceptional Eight leaderboard rule.",
+
+  "play_duration_range_seconds": [5, 60],
+  "_play_duration_note": "[REQUIRED] [min, max] seconds for a single run. Used for midi-per-second fair-play calibration.",
+
+  "trophy_enabled": true,
+  "_trophy_enabled_note": "Opt into monthly leaderboard trophies (gold/silver/bronze). Set false if your game has no persistent leaderboard.",
+
+  "wager_enabled": false,
+  "_wager_enabled_note": "Set true to enable player-vs-player midi wagering. Requires additional Council review.",
+
+  "esport_tier": false,
+  "_esport_tier_note": "Set true if your game uses seeded PRNG + fixed-step physics + input recording (see MINIGAME_BUILDER_GUIDE §7). Enables Daily Challenge mode.",
 
   "cosmetic_items": [
     {
-      "_comment": "Remove this block if you have no cosmetic items to sell",
-      "item_id": "my_cosmetic_skin",
+      "_comment": "Delete this block if you have no cosmetics. Cosmetic items must have no gameplay effect.",
+      "item_id": "example_skin",
       "name": "Example Skin",
-      "description": "A cosmetic skin — no stats attached.",
+      "description": "A cosmetic skin — zero gameplay effect.",
       "price_ton": 0.5,
       "icon_url": "https://your-game.your-domain.com/assets/skin.png"
     }
@@ -35,20 +59,20 @@
     {
       "trophy_id": "first_win",
       "name": "First Win",
-      "description": "Won your first round",
+      "description": "Won your first round.",
       "condition": "first_win",
       "icon_url": "https://your-game.your-domain.com/assets/trophy_first_win.png"
     },
     {
       "trophy_id": "veteran_100",
       "name": "Veteran",
-      "description": "Played 100 rounds",
+      "description": "Played 100 rounds.",
       "condition": "plays_cumulative:100",
       "icon_url": "https://your-game.your-domain.com/assets/trophy_veteran.png"
     }
   ],
 
-  "_tournament_comment": "Remove 'tournament' block if you don't want monthly tournaments",
+  "_tournament_comment": "Delete the tournament block entirely if you don't want monthly tournaments.",
   "tournament": {
     "schedule": "monthly",
     "entry_fee_ton": 1,

@@ -1,148 +1,66 @@
 /**
- * ============================================================
- * src/game/index.ts — "Tap-the-Sticker" placeholder game
- * ============================================================
- * THIS IS A THROWAWAY PLACEHOLDER.
- * Replace this file (and the rest of src/game/) with your real
- * game logic. The only contract with main.ts is:
- *   - Call startGame(canvas, onEnd) to begin
- *   - When the game ends, call onEnd(score, outcome)
+ * src/game/index.ts — placeholder game ("Tap to Score")
  *
- * Keep src/sdk.ts and src/tg.ts unchanged.
- * ============================================================
- *
- * Rules of "Tap-the-Sticker":
- *   - A sticker emoji appears at a random position on the canvas
- *   - Tapping/clicking it scores +100 and moves it to a new position
- *   - Missing (tapping empty space) scores nothing
- *   - Game ends after GAME_DURATION_SECONDS (10 seconds)
+ * ┌──────────────────────────────────────────────────────────────────────┐
+ * │  THIS IS THE SLOT. Replace the body of startGame() with your game.  │
+ * │  Contract: call opts.onEnd(score, outcome) when your run is done.   │
+ * └──────────────────────────────────────────────────────────────────────┘
  */
+import { createInitialState, type GameState } from './state.js'
 
-import { initCanvas, renderFrame, getCanvasSize } from './render.js'
-import {
-  createInitialState,
-  randomSticker,
-  type GameState,
-  GAME_DURATION_SECONDS,
-} from './state.js'
-import { tgHaptic } from '../tg.js'
-
-type GameEndCallback = (score: number, outcome: 'win' | 'loss') => void
-
-// ── Module state ─────────────────────────────────────────────────────────────
+export interface GameOpts {
+  container: HTMLElement
+  onEnd: (score: number, outcome: 'win' | 'loss' | 'draw') => void
+}
 
 let _state: GameState = createInitialState()
-let _rafId = 0
-let _lastTs = 0
-let _onEnd: GameEndCallback | null = null
-let _canvas: HTMLCanvasElement | null = null
-let _handlePointer: ((e: PointerEvent) => void) | null = null
+let _timer: ReturnType<typeof setInterval> | null = null
+let _el: HTMLElement | null = null
+let _opts: GameOpts | null = null
 
-// ── Public API ───────────────────────────────────────────────────────────────
+export const getGameState = (): GameState => _state
 
-/** Start the game. canvas is the <canvas> element; onEnd is called when the game finishes. */
-export function startGame(onEnd: GameEndCallback): void {
-  _onEnd = onEnd
-  const { canvas } = initCanvas()
-  _canvas = canvas
+// ── TODO: replace everything below with your real game ───────────────────────
 
-  _state = createInitialState()
-  _state.phase = 'playing'
-  _state.startTime = performance.now()
-  _state.sticker = randomSticker(getCanvasSize().w, getCanvasSize().h)
+export function startGame(opts: GameOpts): void {
+  _opts = opts
+  _state = { ...createInitialState(), phase: 'playing' }
 
-  // Input
-  _handlePointer = handlePointer
-  _canvas.addEventListener('pointerdown', _handlePointer)
+  const el = document.createElement('div')
+  el.style.cssText = 'position:absolute;inset:0;background:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-family:Fraunces,Georgia,serif;'
 
-  // Kick off render loop
-  _lastTs = performance.now()
-  _rafId = requestAnimationFrame(loop)
+  const countdown = document.createElement('div')
+  countdown.style.cssText = 'font-size:48px;color:#d4a820;font-weight:700;'
+  countdown.textContent = '5'
+
+  const scoreEl = document.createElement('div')
+  scoreEl.style.cssText = 'font-size:22px;color:#f5ecd6;'
+  scoreEl.textContent = 'Score: 0'
+
+  const btn = document.createElement('button')
+  btn.style.cssText = 'font-family:Fraunces,serif;font-size:18px;padding:16px 40px;background:rgba(212,168,32,.2);border:2px solid #d4a820;border-radius:12px;color:#d4a820;cursor:pointer;'
+  btn.textContent = '✦ Tap to score!'
+  btn.addEventListener('click', () => {
+    _state.score += 100
+    scoreEl.textContent = `Score: ${_state.score}`
+  })
+
+  el.append(countdown, scoreEl, btn)
+  opts.container.appendChild(el)
+  _el = el
+
+  let s = 5
+  _timer = setInterval(() => {
+    countdown.textContent = String(--s)
+    if (s <= 0) stopGame()
+  }, 1000)
 }
 
 export function stopGame(): void {
-  cancelAnimationFrame(_rafId)
-  if (_canvas && _handlePointer) {
-    _canvas.removeEventListener('pointerdown', _handlePointer)
-  }
-}
-
-export function getGameState(): GameState {
-  return _state
-}
-
-// ── Game loop ─────────────────────────────────────────────────────────────────
-
-function loop(ts: number): void {
-  const dt = (ts - _lastTs) / 1000
-  _lastTs = ts
-
+  if (_timer) { clearInterval(_timer); _timer = null }
+  _el?.remove(); _el = null
   if (_state.phase === 'playing') {
-    _state.timeRemaining = Math.max(
-      0,
-      GAME_DURATION_SECONDS - (performance.now() - _state.startTime) / 1000,
-    )
-
-    if (_state.timeRemaining <= 0) {
-      endGame()
-      return
-    }
+    _state.phase = 'ended'
+    _opts?.onEnd(_state.score, _state.score > 0 ? 'win' : 'loss')
   }
-
-  renderFrame(_state, dt)
-  _rafId = requestAnimationFrame(loop)
-}
-
-// ── Input ─────────────────────────────────────────────────────────────────────
-
-function handlePointer(e: PointerEvent): void {
-  if (_state.phase !== 'playing') return
-
-  const rect = (_canvas as HTMLCanvasElement).getBoundingClientRect()
-  const px = e.clientX - rect.left
-  const py = e.clientY - rect.top
-
-  const sticker = _state.sticker
-  if (!sticker || !sticker.visible) return
-
-  const dx = px - sticker.x
-  const dy = py - sticker.y
-  const dist = Math.sqrt(dx * dx + dy * dy)
-
-  if (dist <= sticker.radius * 1.3) {
-    // Hit!
-    _state.score += 100
-    _state.tapCount++
-    sticker.hitAt = performance.now()
-    tgHaptic('impact_medium')
-
-    // Spawn a new sticker after a short flash delay
-    setTimeout(() => {
-      if (_state.phase === 'playing') {
-        const { w, h } = getCanvasSize()
-        _state.sticker = randomSticker(w, h)
-      }
-    }, 120)
-  } else {
-    _state.misses++
-  }
-}
-
-// ── End ───────────────────────────────────────────────────────────────────────
-
-function endGame(): void {
-  cancelAnimationFrame(_rafId)
-  _state.phase = 'ended'
-  _state.endTime = performance.now()
-
-  if (_canvas && _handlePointer) {
-    _canvas.removeEventListener('pointerdown', _handlePointer)
-  }
-
-  tgHaptic(_state.score > 0 ? 'success' : 'warning')
-
-  // Any score > 0 counts as a win for this placeholder game.
-  // Studios: define their own outcome logic.
-  const outcome: 'win' | 'loss' = _state.score > 0 ? 'win' : 'loss'
-  _onEnd?.(  _state.score, outcome)
 }

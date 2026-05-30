@@ -1,33 +1,15 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#0f0f23" />
+    <meta name="viewport" content="width=390, initial-scale=1.0, viewport-fit=cover" />
     <title>Sticker Galaxy Arcade</title>
-    <!-- Telegram Web App SDK — required for tg.* helpers -->
+
+    <!-- Telegram WebApp SDK — required for tgReady(), haptics, CloudStorage, etc. -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
   <body>
-    <div id="app">
-      <!-- Canvas is injected by src/game/render.ts -->
-      <canvas id="game-canvas"></canvas>
-
-      <!-- HUD overlay: score, timer, midi balance -->
-      <div id="hud" class="hud hidden"></div>
-
-      <!-- Result screen: shown after game ends -->
-      <div id="result-screen" class="result-screen hidden"></div>
-
-      <!-- Loading / error state -->
-      <div id="loading-screen" class="loading-screen">
-        <div class="loading-content">
-          <div class="spinner"></div>
-          <p id="loading-message">Connecting to Sticker Galaxy…</p>
-        </div>
-      </div>
-    </div>
+    <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

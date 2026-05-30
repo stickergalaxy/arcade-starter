@@ -1,57 +1,52 @@
 /**
- * src/ui/HUD.ts — Score + timer + midi balance overlay
+ * src/ui/HUD.ts — In-game heads-up display.
  *
- * Renders into #hud. Shown during gameplay, hidden otherwise.
+ * Minimal: shows live score (and optionally a timer / midi balance).
+ * Replace / extend this with whatever your game needs during play.
+ *
+ * Mount: #hud in index.html (styled in style.css).
  */
 
-import { type GameState, GAME_DURATION_SECONDS } from '../game/state.js'
+import { type GameState } from '../game/state.js'
 
-let _el: HTMLElement | null = null
+let _hudEl: HTMLElement | null = null
 let _scoreEl: HTMLElement | null = null
-let _timerEl: HTMLElement | null = null
-let _midiEl: HTMLElement | null = null
+let _metaEl: HTMLElement | null = null
 
 export function initHUD(): void {
-  _el = document.getElementById('hud')!
-  _el.innerHTML = `
-    <div class="hud-stat">
-      <span class="hud-label">Score</span>
-      <span class="hud-value" id="hud-score">0</span>
-    </div>
-    <div class="hud-stat">
-      <span class="hud-label">Time</span>
-      <span class="hud-value timer" id="hud-timer">${GAME_DURATION_SECONDS}</span>
-    </div>
-    <div class="hud-stat">
-      <span class="hud-label">Midi</span>
-      <span class="hud-value midi" id="hud-midi">—</span>
-    </div>
-  `
-  _scoreEl = document.getElementById('hud-score')
-  _timerEl = document.getElementById('hud-timer')
-  _midiEl  = document.getElementById('hud-midi')
+  const app = document.getElementById('app')!
+  if (document.getElementById('hud')) return
+
+  const hud = document.createElement('div')
+  hud.id = 'hud'
+
+  const scoreEl = document.createElement('div')
+  scoreEl.className = 'hud-score'
+  scoreEl.textContent = '0'
+
+  const metaEl = document.createElement('div')
+  metaEl.className = 'hud-meta'
+
+  hud.appendChild(scoreEl)
+  hud.appendChild(metaEl)
+  app.appendChild(hud)
+
+  _hudEl = hud
+  _scoreEl = scoreEl
+  _metaEl = metaEl
 }
 
 export function showHUD(): void {
-  _el?.classList.remove('hidden')
+  _hudEl?.classList.add('visible')
 }
 
 export function hideHUD(): void {
-  _el?.classList.add('hidden')
+  _hudEl?.classList.remove('visible')
 }
 
 export function updateHUD(state: GameState, midiBalance: number | null): void {
-  if (!_scoreEl || !_timerEl || !_midiEl) return
-
-  _scoreEl.textContent = String(state.score)
-
-  const secs = Math.ceil(state.timeRemaining)
-  _timerEl.textContent = String(secs)
-  if (secs <= 3) {
-    _timerEl.classList.add('warning')
-  } else {
-    _timerEl.classList.remove('warning')
+  if (_scoreEl) _scoreEl.textContent = String(state.score)
+  if (_metaEl && midiBalance !== null) {
+    _metaEl.textContent = `⚡ ${midiBalance.toLocaleString()}`
   }
-
-  _midiEl.textContent = midiBalance !== null ? String(midiBalance) : '—'
 }

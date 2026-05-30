@@ -1,14 +1,22 @@
 {
-  "name": "arcade-starter",
-  "version": "0.1.0",
-  "description": "Sticker Galaxy Arcade — Studio Starter Template",
-  "private": true,
+  "name": "@stickergalaxy/arcade-starter",
+  "version": "2.0.0",
+  "description": "Forkable scaffold for Sticker Galaxy Arcade minigames. Imports @stickergalaxy/arcade-ui for the full visual language out of the box.",
+  "private": false,
+  "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stickergalaxy/arcade-starter.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@stickergalaxy/arcade-ui": "^0.1.0"
   },
   "devDependencies": {
     "typescript": "^5.4.5",
