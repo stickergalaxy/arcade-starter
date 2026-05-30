@@ -144,11 +144,13 @@ See the Arcade Studio Leverage Playbook for the full bounty structure (link comi
 
 | Resource | URL |
 |---|---|
-| Full tutorial | `docs/MINIGAME_BUILDER_GUIDE.md` |
-| AI context bundle | [`llms.txt`](https://github.com/hollowtradr/babyyoda-bot/blob/master/docs/llms.txt) — pass to Claude/Cursor/Codex before building |
-| SDK reference | `docs/ARCADE_SDK_v1.md` |
+| Full tutorial | [`docs/MINIGAME_BUILDER_GUIDE.md`](docs/MINIGAME_BUILDER_GUIDE.md) |
+| AI context bundle (short) | [`docs/llms.txt`](docs/llms.txt) — index for AI assistants |
+| AI context bundle (full) | [`docs/llms-full.txt`](docs/llms-full.txt) — single-fetch full context (~108 KB) |
+| SDK reference | [`docs/ARCADE_SDK_v1.md`](docs/ARCADE_SDK_v1.md) |
+| Leverage playbook | [`docs/ARCADE_STUDIO_LEVERAGE_PLAYBOOK.md`](docs/ARCADE_STUDIO_LEVERAGE_PLAYBOOK.md) |
 | Design system | [`@stickergalaxy/arcade-ui`](https://github.com/stickergalaxy/arcade-ui) |
-| llms.txt (AI context) | Coming soon — YODA-382 |
+| Manifest schema | [`manifest.schema.json`](manifest.schema.json) |
 
 ---
 

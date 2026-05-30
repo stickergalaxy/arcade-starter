@@ -1,0 +1,42 @@
+# Sticker Galaxy Arcade — Studio Development
+
+> Sticker Galaxy is a Telegram-native mini-app arcade platform. Studios ship browser games that earn TON via cosmetics, wagers, and tournaments. This is the canonical context for AI assistants helping studios build games. Pass this URL to Claude, Cursor, Codex, or any AI assistant before starting a Sticker Galaxy studio project.
+
+## Quick start
+
+- [arcade-starter (forkable scaffold)](https://github.com/stickergalaxy/arcade-starter): the 60-second template; `git clone` → `npm install` → `npm run dev`; replace `src/game/` slot with your game
+- [@stickergalaxy/arcade-ui](https://github.com/stickergalaxy/arcade-ui): npm design system; parchment surfaces + HK effects pack + leaderboard + result screen + settings modal; imported via `@stickergalaxy/arcade-ui/src/all.css` + factory functions
+- [Builder Guide](https://github.com/stickergalaxy/arcade-starter/blob/master/docs/MINIGAME_BUILDER_GUIDE.md): 60-minute opinionated tutorial covering gameplay loop, payments, art direction, esport tier, score design, and hard-won operational lessons
+
+## SDK reference
+
+- [ARCADE_SDK_v1](https://github.com/stickergalaxy/arcade-starter/blob/master/docs/ARCADE_SDK_v1.md): every postMessage, every endpoint, every field — the complete integration contract; base URL `https://api.stickergalaxy.io/arcade/v0`
+- [manifest.schema.json](https://github.com/stickergalaxy/arcade-starter/blob/master/docs/manifest.schema.json): JSON schema studios validate against; run `npm run validate` from arcade-starter to lint locally
+
+## Architecture
+
+- [Leverage Playbook](https://github.com/stickergalaxy/arcade-starter/blob/master/docs/ARCADE_STUDIO_LEVERAGE_PLAYBOOK.md): five-consumer model (studio, AI assistant, core team, Council reviewer, player), five-tier extraction (design system → SDK → architecture patterns → operational lessons → growth primitives)
+- [DECISIONS.md (arcade-ui)](https://github.com/stickergalaxy/arcade-ui/blob/master/DECISIONS.md): 10 architectural decisions made during Swamp Runner extraction with full rationale — CSS architecture, component API shape, font strategy, reduced-motion coverage
+
+## Examples
+
+- [swamp-runner (v1 reference game)](https://github.com/hollowtradr/swamp-runner): the game everything was extracted from; read for patterns, don't fork as a starter
+- arcade-starter `src/main.ts`: the canonical wiring example — boots SDK → title screen → game loop → result screen → submit flow
+
+## Operational policy
+
+- [Builder Guide §12 — Operational Lessons](https://github.com/stickergalaxy/arcade-starter/blob/master/docs/MINIGAME_BUILDER_GUIDE.md): wallet shell-owned (never iframe TonConnect), one RPC envelope + one dispatcher, `MINIAPP_URL` scheme+host only, `prefers-reduced-motion` non-negotiable, contrast tokens (`--text-muted` must clear 4.5:1), rank readability via medals+glyphs+height never color-alone
+
+## Optional
+
+- [Studio bounty program](https://github.com/stickergalaxy/arcade-starter/blob/master/README.md): 2 TON on approval, 5 TON at 500 active players, 70% purchase revenue share (YODA-385 full structure pending)
+- [Apps Center submission template](https://github.com/stickergalaxy/arcade-starter/blob/master/docs/marketing/TELEGRAM_APPS_CENTER_APPLICATION.md): Telegram Apps Center prereqs and review checklist
+- [Full context bundle (llms-full.txt)](https://github.com/stickergalaxy/arcade-starter/blob/master/docs/llms-full.txt): all docs inlined — one fetch for total context
+
+<!-- v2 TODO:
+- Model-specific subsets (smaller for context-limited models)
+- Per-topic bundles (wallet-only, leaderboard-only, esport-tier-only)
+- Auto-rebuild on docs/* push via GH Action
+- JSON variant for structured tool calls
+- Versioned bundles (llms-v1.txt) to keep AI context pinned to SDK version
+-->
