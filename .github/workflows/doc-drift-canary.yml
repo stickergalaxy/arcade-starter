@@ -1,0 +1,100 @@
+name: doc drift canary
+
+# Catches the case where the upstream mirror Action
+# (.github/workflows/mirror-studio-docs.yml in hollowtradr/babyyoda-bot)
+# silently breaks and our public docs go stale.
+#
+# Runs daily. Fetches the canonical raw URLs that the upstream Action
+# would have rewritten to, compares against local copies, opens an
+# issue if drift is detected.
+#
+# No write access to upstream required — pure read + compare.
+
+on:
+  schedule:
+    - cron: '0 13 * * *'   # 13:00 UTC daily ~= 09:00 ET
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare local docs vs upstream raw
+        id: compare
+        run: |
+          set -euo pipefail
+          DRIFT=""
+          UPSTREAM_BASE="https://raw.githubusercontent.com/hollowtradr/babyyoda-bot/master"
+
+          check() {
+            local local_path="$1"
+            local upstream_path="$2"
+
+            if ! curl -fsSL -o /tmp/upstream.txt "${UPSTREAM_BASE}/${upstream_path}"; then
+              echo "::warning::upstream fetch failed for ${upstream_path} (may be private — skip)"
+              return 0
+            fi
+
+            # Rewrite upstream cross-refs the same way the mirror Action does
+            # before comparing, so we don't flag the rewrite itself as drift.
+            sed -i \
+              -e 's|hollowtradr/babyyoda-bot/blob/master/docs/|stickergalaxy/arcade-starter/blob/master/docs/|g' \
+              -e 's|hollowtradr/babyyoda-bot/raw/master/docs/|stickergalaxy/arcade-starter/raw/master/docs/|g' \
+              -e 's|raw\.githubusercontent\.com/hollowtradr/babyyoda-bot/master/docs/|raw.githubusercontent.com/stickergalaxy/arcade-starter/master/docs/|g' \
+              /tmp/upstream.txt
+
+            if ! diff -q /tmp/upstream.txt "${local_path}" >/dev/null 2>&1; then
+              DRIFT="${DRIFT}\n- \`${local_path}\` differs from upstream \`${upstream_path}\`"
+              echo "drift: ${local_path}"
+            else
+              echo "ok:    ${local_path}"
+            fi
+          }
+
+          check docs/MINIGAME_BUILDER_GUIDE.md          docs/MINIGAME_BUILDER_GUIDE.md
+          check docs/ARCADE_SDK_v1.md                   docs/ARCADE_SDK_v1.md
+          check docs/ARCADE_STUDIO_LEVERAGE_PLAYBOOK.md docs/ARCADE_STUDIO_LEVERAGE_PLAYBOOK.md
+          check manifest.schema.json                    docs/manifest.schema.json
+
+          if [ -n "$DRIFT" ]; then
+            {
+              echo "drift<<EOF"
+              echo -e "$DRIFT"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open or update drift issue
+        if: steps.compare.outputs.drift != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DRIFT: ${{ steps.compare.outputs.drift }}
+        run: |
+          set -euo pipefail
+          TITLE="doc drift detected vs babyyoda-bot upstream"
+
+          EXISTING=$(gh issue list --search "$TITLE in:title state:open" --json number --jq '.[0].number' || true)
+
+          BODY="The daily canary detected drift between public docs in this repo and the canonical source in \`hollowtradr/babyyoda-bot\`. Either:
+
+          1. The upstream mirror Action (\`mirror-studio-docs.yml\`) broke.
+          2. Someone hand-edited the public docs here (don't).
+
+          **Drift summary:**
+          ${DRIFT}
+
+          Run the mirror Action manually:
+          https://github.com/hollowtradr/babyyoda-bot/actions/workflows/mirror-studio-docs.yml"
+
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY" --label "drift"
+          fi
