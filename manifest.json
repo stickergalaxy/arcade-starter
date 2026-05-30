@@ -1,59 +1,51 @@
 {
-  "_doc": "Sticker Galaxy Arcade — Game Manifest v2. Submit via /council propose_minigame in the Galactic Council Telegram group.",
-  "_review_required": "Fields tagged [REQUIRED] must be filled before submitting. Unfilled [REQUIRED] fields will fail automated lint and block your review.",
+  "$schema": "https://stickergalaxy.io/schemas/arcade-manifest/v2.json",
 
   "name": "Your Game Name",
-  "_name_note": "[REQUIRED] Display name in the Arcade. Short (≤24 chars). Shown in leaderboards, result screens, and the sector map.",
+  "slug": "your_game_slug",
+  "version": "1.0.0",
 
-  "studio": "Your Studio Name",
-  "_studio_note": "[REQUIRED] Your studio display name. Shown in the Arcade listing.",
+  "studio": {
+    "name": "Your Studio Name",
+    "contact_telegram": "@your_telegram_handle",
+    "ton_wallet": "EQD000000000000000000000000000000000000000000000"
+  },
 
-  "studio_ton_wallet": "EQD...",
-  "_studio_ton_wallet_note": "[REQUIRED] Your TON wallet address for revenue payouts. You receive 70% of every in-game purchase. Cannot be changed after first payout.",
+  "description": "One paragraph explaining what makes your game fun. Must be 20–500 characters.",
 
-  "genre": "arcade",
-  "_genre_note": "[REQUIRED] One of: arcade, puzzle, racing, auto-battler, idle, other.",
+  "category": "action",
 
-  "sector": "cantina-district",
-  "_sector_note": "[REQUIRED] The Sticker Galaxy sector your game belongs to (e.g. cantina-district, dagobah, coruscant). Sets your visual/lore context.",
+  "cover_image_url": "https://your-game.your-domain.com/assets/cover.jpg",
 
-  "description": "One sentence: what makes your game fun.",
-  "_description_note": "Shown in the Arcade listing. 120 chars max.",
-
-  "url": "https://your-game.your-domain.com",
-  "_url_note": "[REQUIRED] Production URL. Must be HTTPS. The host launches your game in an iframe at this URL with ?session_token=... appended.",
+  "play_url": "https://your-game.your-domain.com",
 
   "sandbox_url": "https://your-game.your-domain.com?sandbox=1",
-  "_sandbox_url_note": "Optional staging URL used by Council reviewers during approval. If omitted, reviewers use the production url.",
+
+  "sector": "cantina-district",
 
   "max_score": 1000,
-  "_max_score_note": "[REQUIRED] Realistic maximum a skilled human can achieve. NOT 99999. Get this wrong and players earn 1 midi per run. Halve or double after first week of telemetry if median is outside 40–70% of max.",
 
-  "perfect_score_achievable": false,
-  "_perfect_score_achievable_note": "Set true only if a flawless run can hit max_score exactly. Enables the Exceptional Eight leaderboard rule.",
+  "min_play_duration_seconds": 5,
 
   "play_duration_range_seconds": [5, 60],
-  "_play_duration_note": "[REQUIRED] [min, max] seconds for a single run. Used for midi-per-second fair-play calibration.",
+
+  "supports": ["leaderboard", "share_to_story"],
+
+  "min_sdk_version": "1.0.0",
+
+  "tags": ["arcade", "one-tap"],
+
+  "nsfw": false,
+
+  "perfect_score_achievable": false,
 
   "trophy_enabled": true,
-  "_trophy_enabled_note": "Opt into monthly leaderboard trophies (gold/silver/bronze). Set false if your game has no persistent leaderboard.",
 
   "wager_enabled": false,
-  "_wager_enabled_note": "Set true to enable player-vs-player midi wagering. Requires additional Council review.",
 
   "esport_tier": false,
-  "_esport_tier_note": "Set true if your game uses seeded PRNG + fixed-step physics + input recording (see MINIGAME_BUILDER_GUIDE §7). Enables Daily Challenge mode.",
 
-  "cosmetic_items": [
-    {
-      "_comment": "Delete this block if you have no cosmetics. Cosmetic items must have no gameplay effect.",
-      "item_id": "example_skin",
-      "name": "Example Skin",
-      "description": "A cosmetic skin — zero gameplay effect.",
-      "price_ton": 0.5,
-      "icon_url": "https://your-game.your-domain.com/assets/skin.png"
-    }
-  ],
+  "cosmetic_items": [],
 
   "studio_trophies": [
     {
@@ -62,25 +54,6 @@
       "description": "Won your first round.",
       "condition": "first_win",
       "icon_url": "https://your-game.your-domain.com/assets/trophy_first_win.png"
-    },
-    {
-      "trophy_id": "veteran_100",
-      "name": "Veteran",
-      "description": "Played 100 rounds.",
-      "condition": "plays_cumulative:100",
-      "icon_url": "https://your-game.your-domain.com/assets/trophy_veteran.png"
     }
-  ],
-
-  "_tournament_comment": "Delete the tournament block entirely if you don't want monthly tournaments.",
-  "tournament": {
-    "schedule": "monthly",
-    "entry_fee_ton": 1,
-    "prize_distribution": [
-      { "rank": 1, "prize_type": "ton_payout", "value_ton": 0 },
-      { "rank": 2, "prize_type": "telegram_gift" },
-      { "rank": 3, "prize_type": "telegram_gift" },
-      { "rank": "4-10", "prize_type": "cosmetic_trophy" }
-    ]
-  }
+  ]
 }

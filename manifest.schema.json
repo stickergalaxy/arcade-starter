@@ -1,0 +1,366 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stickergalaxy.io/schemas/arcade-manifest/v2.json",
+  "title": "Sticker Galaxy Arcade Game Manifest",
+  "description": "Canonical schema for Sticker Galaxy Arcade game manifests (v2). All [REQUIRED] fields must be present and valid before the Galactic Council will approve your submission. Run `npm run validate` from arcade-starter to check locally.",
+  "type": "object",
+  "required": ["name", "slug", "version", "studio", "description", "category", "cover_image_url", "play_url", "max_score", "play_duration_range_seconds"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional JSON Schema URI. Include for editor autocomplete: \"$schema\": \"https://stickergalaxy.io/schemas/arcade-manifest/v2.json\""
+    },
+
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60,
+      "description": "[REQUIRED] Display name shown in the Arcade, leaderboards, result screens, and the sector map. Keep it short and punchy. ≤24 chars recommended, hard limit 60."
+    },
+
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{2,32}$",
+      "description": "[REQUIRED] URL-safe identifier for your game. Used in deeplinks (t.me/bot/play?startapp=arcade_<slug>), API paths, and internal tracking. Lowercase letters, digits, and underscores only. Must start with a letter. 3–33 chars total. Cannot be changed after first publish without losing leaderboard history."
+    },
+
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "description": "[REQUIRED] Semantic version of your game build (semver: MAJOR.MINOR.PATCH). Bump PATCH for bug fixes, MINOR for new features, MAJOR for breaking changes. The Council records this on each approval so changelogs are trackable."
+    },
+
+    "studio": {
+      "type": "object",
+      "description": "[REQUIRED] Studio identity block. Must include a display name and at least one contact method.",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "[REQUIRED] Your studio's display name shown in the Arcade listing."
+        },
+        "contact_telegram": {
+          "type": "string",
+          "pattern": "^@[A-Za-z][A-Za-z0-9_]{4,31}$",
+          "description": "Telegram handle for the review contact (@username). Required if contact_email is absent."
+        },
+        "contact_email": {
+          "type": "string",
+          "format": "email",
+          "description": "Email address for the review contact. Required if contact_telegram is absent."
+        },
+        "website": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://",
+          "description": "Studio website URL (HTTPS only). Optional but recommended."
+        },
+        "ton_wallet": {
+          "type": "string",
+          "pattern": "^(EQ|UQ)[A-Za-z0-9_-]{46}$",
+          "description": "TON wallet address for bounty and revenue-share payouts (EQ.../UQ... + 46 base64url chars). Required when wager_enabled=true, trophy_enabled=true, or cosmetic_items is non-empty. You receive 70% of all in-game purchase revenue. Cannot be changed after first payout."
+        }
+      },
+      "anyOf": [
+        { "required": ["contact_telegram"] },
+        { "required": ["contact_email"] }
+      ]
+    },
+
+    "description": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 500,
+      "description": "[REQUIRED] One-paragraph pitch shown in the Arcade listing. 20–500 chars. Tell players what makes your game fun, not just what it is."
+    },
+
+    "category": {
+      "type": "string",
+      "enum": ["runner", "puzzle", "action", "idle", "multiplayer", "other"],
+      "description": "[REQUIRED] Game category for Arcade browsing and recommendations. Pick the closest fit. 'other' is allowed but reduces discoverability."
+    },
+
+    "genre": {
+      "type": "string",
+      "enum": ["arcade", "puzzle", "racing", "auto-battler", "idle", "other"],
+      "description": "Legacy genre field from manifest v1. Kept for backwards compatibility. Prefer 'category' for new submissions."
+    },
+
+    "sector": {
+      "type": "string",
+      "description": "The Sticker Galaxy sector your game belongs to (e.g. cantina-district, dagobah, coruscant). Sets your visual and lore context in the sector map. Ask @hollowtradr for the current sector list."
+    },
+
+    "cover_image_url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://.*\\.(png|jpg|jpeg|webp)(\\?.*)?$",
+      "description": "[REQUIRED] HTTPS URL to your game's cover art shown in the Arcade listing and share cards. Must be .png, .jpg/.jpeg, or .webp. Recommended size: 1200×630 (OG card ratio). File must be publicly accessible without auth."
+    },
+
+    "play_url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://",
+      "description": "[REQUIRED] Production HTTPS URL where your game is deployed. The host launches your game in an iframe at this URL with ?session_token=... appended. Must be publicly accessible."
+    },
+
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://",
+      "description": "Alias for play_url (v1 compat). If both are present, play_url takes precedence."
+    },
+
+    "sandbox_url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://",
+      "description": "Optional staging URL used by Council reviewers during approval. If omitted, reviewers use play_url. Useful for pointing reviewers at a feature branch before promoting to production."
+    },
+
+    "max_score": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "[REQUIRED] Realistic maximum score a skilled (but not superhuman) human player can achieve. NOT 99999. Get this wrong and players earn 1 midi per run. Playtest with at least 10 sessions. Halve or double after the first week of telemetry if the median score falls outside 40–70% of max_score."
+    },
+
+    "min_play_duration_seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 5,
+      "description": "Minimum seconds a single run takes before a score can be submitted. Used for midi-per-second fair-play calibration. Prevents zero-second score farming. Default: 5."
+    },
+
+    "play_duration_range_seconds": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 0 },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "[min, max] seconds for a single run. Used for midi-per-second fair-play calibration alongside min_play_duration_seconds."
+    },
+
+    "supports": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["leaderboard", "daily_seed", "ghost_replay", "wallet_payments", "share_to_story"]
+      },
+      "description": "Opt-in feature flags. 'leaderboard' enables persistent rankings. 'daily_seed' enables Daily Challenge (requires seeded PRNG + fixed-step physics — see §7 of MINIGAME_BUILDER_GUIDE). 'ghost_replay' enables replay sharing. 'wallet_payments' enables in-game TON purchases (requires studio.ton_wallet). 'share_to_story' enables the share-to-story viral loop."
+    },
+
+    "min_sdk_version": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$",
+      "default": "1.0.0",
+      "description": "Minimum @stickergalaxy/sdk-core version required to run this game. The host rejects session tokens from older SDK versions. Default: '1.0.0'."
+    },
+
+    "tags": {
+      "type": "array",
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 32 },
+      "description": "Up to 5 freeform tags for discovery (e.g. 'endless', 'one-tap', 'pixel-art'). Keep them descriptive and concise."
+    },
+
+    "nsfw": {
+      "type": "boolean",
+      "default": false,
+      "description": "Set true if your game contains content that isn't suitable for all ages. NSFW games receive reduced promotion and may be restricted on certain server types. Default: false."
+    },
+
+    "perfect_score_achievable": {
+      "type": "boolean",
+      "default": false,
+      "description": "Set true only if a flawless run can hit max_score exactly. Enables the Exceptional Eight leaderboard rule. Default: false."
+    },
+
+    "trophy_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Opt into monthly leaderboard trophies (gold/silver/bronze). Set false if your game has no persistent leaderboard. Requires studio.ton_wallet when true."
+    },
+
+    "wager_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Set true to enable player-vs-player midi wagering. Requires additional Council review and studio.ton_wallet."
+    },
+
+    "esport_tier": {
+      "type": "boolean",
+      "default": false,
+      "description": "Set true if your game implements the esport contract: seeded PRNG + fixed-step physics + input recording (see MINIGAME_BUILDER_GUIDE §7). Enables Daily Challenge mode and esport leaderboard eligibility."
+    },
+
+    "cosmetic_items": {
+      "type": "array",
+      "description": "In-game cosmetic items available for purchase. Each item must have zero gameplay effect. Requires studio.ton_wallet.",
+      "items": {
+        "type": "object",
+        "required": ["item_id", "name", "price_ton", "icon_url"],
+        "additionalProperties": false,
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{1,48}$",
+            "description": "Unique identifier for this cosmetic item. Lowercase letters, digits, underscores. Cannot be changed after first purchase."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60,
+            "description": "Display name shown in the in-game shop."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Short description. Must mention that it has zero gameplay effect."
+          },
+          "price_ton": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Price in TON. Keep orders of magnitude reasonable — 0.05–2.0 TON is the typical range."
+          },
+          "icon_url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://.*\\.(png|jpg|jpeg|webp)(\\?.*)?$",
+            "description": "HTTPS URL to the item's icon (png/jpg/webp). 256×256 recommended."
+          }
+        }
+      }
+    },
+
+    "studio_trophies": {
+      "type": "array",
+      "description": "Custom achievement trophies defined by your studio. Separate from the monthly leaderboard trophies managed by the Arcade.",
+      "items": {
+        "type": "object",
+        "required": ["trophy_id", "name", "condition", "icon_url"],
+        "additionalProperties": false,
+        "properties": {
+          "trophy_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{1,48}$",
+            "description": "Unique trophy identifier. Cannot be changed after first award."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "condition": {
+            "type": "string",
+            "description": "Machine-readable condition string. Supported formats: 'first_win', 'plays_cumulative:<N>', 'score_single_run:>:<N>'. Ask @hollowtradr for the full condition DSL."
+          },
+          "icon_url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://.*\\.(png|jpg|jpeg|webp)(\\?.*)?$"
+          }
+        }
+      }
+    },
+
+    "tournament": {
+      "type": "object",
+      "description": "Optional monthly tournament config. Omit entirely if you don't want a tournament.",
+      "required": ["schedule"],
+      "additionalProperties": false,
+      "properties": {
+        "schedule": {
+          "type": "string",
+          "enum": ["monthly", "weekly", "daily"],
+          "description": "How often the tournament resets."
+        },
+        "entry_fee_ton": {
+          "type": "number",
+          "minimum": 0,
+          "description": "TON entry fee per tournament enrollment. 0 = free entry."
+        },
+        "prize_distribution": {
+          "type": "array",
+          "description": "Prize rules keyed by rank or rank range.",
+          "items": {
+            "type": "object",
+            "required": ["rank", "prize_type"],
+            "additionalProperties": false,
+            "properties": {
+              "rank": {
+                "oneOf": [
+                  { "type": "integer", "minimum": 1 },
+                  { "type": "string", "pattern": "^\\d+-\\d+$" }
+                ],
+                "description": "Rank (1-based integer) or rank range (e.g. '4-10')."
+              },
+              "prize_type": {
+                "type": "string",
+                "enum": ["ton_payout", "telegram_gift", "cosmetic_trophy", "midi_bonus"],
+                "description": "Prize type. 'ton_payout' requires value_ton."
+              },
+              "value_ton": {
+                "type": "number",
+                "minimum": 0,
+                "description": "TON payout amount. Required when prize_type is 'ton_payout'."
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "localization": {
+      "type": "object",
+      "description": "Optional localization overrides for name and description. Keys are BCP-47 language codes (e.g. 'ru', 'zh-Hans', 'es'). Values are objects with 'name' and/or 'description' string fields.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 60 },
+          "description": { "type": "string", "minLength": 1, "maxLength": 500 }
+        }
+      }
+    }
+  },
+
+  "examples": [
+    {
+      "$schema": "https://stickergalaxy.io/schemas/arcade-manifest/v2.json",
+      "name": "Swamp Runner",
+      "slug": "swamp_runner",
+      "version": "1.2.0",
+      "studio": {
+        "name": "Hollow Trading Co.",
+        "contact_telegram": "@hollowtradr",
+        "ton_wallet": "EQDyh6jXMkE3h6gFSMqDHqR7pHJaGq8lNx8mK9oQwZ0Vabc0"
+      },
+      "description": "Dodge obstacles through the Dagobah swamp in an endless runner where every Midi earned goes straight to your wallet.",
+      "category": "runner",
+      "sector": "dagobah",
+      "cover_image_url": "https://swamp-runner.stickergalaxy.io/assets/cover.jpg",
+      "play_url": "https://swamp-runner.stickergalaxy.io",
+      "max_score": 5000,
+      "min_play_duration_seconds": 5,
+      "play_duration_range_seconds": [5, 120],
+      "supports": ["leaderboard", "share_to_story", "wallet_payments"],
+      "min_sdk_version": "1.0.0",
+      "tags": ["endless", "one-tap", "pixel-art", "runner"],
+      "nsfw": false,
+      "perfect_score_achievable": false,
+      "trophy_enabled": true,
+      "wager_enabled": false,
+      "esport_tier": false
+    }
+  ]
+}
